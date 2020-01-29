@@ -1,0 +1,5 @@
+.nfs*
+logs/traefik.log
+logs/access.log
+*.swp
+*~

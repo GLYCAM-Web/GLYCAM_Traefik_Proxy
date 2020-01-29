@@ -1,0 +1,56 @@
+# Based on post at:  https://community.containo.us/t/swarm-mode-giving-404/2746/3
+version: "3.7"
+
+services:
+  reverse-proxy:
+    image: traefik:2.1
+    networks:
+      - proxy_net
+    command:
+      - --entrypoints.web.address=:80
+      # Swarm
+      - --providers.docker
+      - --providers.docker.swarmMode=true
+      - --providers.docker.exposedbydefault=false
+      # Enables web UI and tells Traefik to listen to docker
+      #- --api
+      - --api.insecure=true
+      # Logging
+      #- --log.level=DEBUG # DEBUG, ERROR, INFO???
+      - --log.level=ERROR # DEBUG, ERROR, INFO???
+      - --log.filePath=/logs/traefik.log
+      - --log.format=json
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - ./logs:/logs
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: "traefik_proxy_net"
+        # Dashboard
+        traefik.http.routers.traefik.rule: "Host(`traefik.swarm`)"
+        # Swarm Mode
+        traefik.http.services.traefik.loadbalancer.server.port: 80
+
+  whoami:
+    image: containous/whoami:v1.3.0
+    networks:
+      - proxy_net
+    deploy:
+      labels:
+        traefik.enable: "true"
+        traefik.docker.network: "traefik_proxy_net"
+        traefik.http.routers.whoami.rule: "Host(`traefik-whoami.swarm`)"
+        # Swarm Mode
+        traefik.http.services.whoami.loadbalancer.server.port: 80
+
+networks:
+  proxy_net:
+    name: "traefik_proxy_net"
