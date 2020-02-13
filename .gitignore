@@ -3,3 +3,4 @@ logs/traefik.log
 logs/access.log
 *.swp
 *~
+*git-ignore-me*
