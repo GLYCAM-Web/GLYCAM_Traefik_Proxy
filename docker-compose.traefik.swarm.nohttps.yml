@@ -17,7 +17,8 @@ services:
       - --api.insecure=true
       # Logging
       #- --log.level=DEBUG # DEBUG, ERROR, INFO???
-      - --log.level=ERROR # DEBUG, ERROR, INFO???
+      - --log.level=INFO # DEBUG, ERROR, INFO???
+      #- --log.level=ERROR # DEBUG, ERROR, INFO???
       - --log.filePath=/logs/traefik.log
       - --log.format=json
     ports:

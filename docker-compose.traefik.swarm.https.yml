@@ -13,43 +13,16 @@ services:
     command:
       - --entrypoints.websecure.address=:443
       - --certificatesResolvers.le.acme.email=glycam@gmail.com
-      - --certificatesResolvers.le.acme.storage=acme.json
-      - --certificatesResolvers.le.acme.caServer=https://acme-staging-v02.api.letsencrypt.org/directory
-      - --certificatesResolvers.le.acme.tlsChallenge=true
-#      - --certificatesResolvers.le.acme.httpChallenge=true
+      - --certificatesResolvers.le.acme.storage=/etc/traefik/acme/acme.json
+      - --certificatesResolvers.le.acme.httpChallenge=true
       - --certificatesResolvers.le.acme.httpChallenge.entryPoint=web
+    deploy:
+      labels:
+        # Global http to https redirect -- Not sure if this is doing anything at all (BLF)
+        - --traefik.http.routers.http-catchall.rule="hostregexp(`{host:.+}`)"
+        - --traefik.http.routers.http-catchall.entrypoints=web
+        - --traefik.http.routers.http-catchall.middlewares=redirect-to-https
+        # Middleware redirect -- Not sure if this is doing anything at all (BLF)
+        - --traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
 
-        #  These are only needed if traefik's dashboard is to be made 
-        #  available on the net.  I see no reason for this.
-        #
-        #    deploy:
-        #      labels:
-        #        - --traefik.http.routers.traefik.tls=true
-        #        - --traefik.http.routers.traefik.tls.certresolver=le
-        #        - --traefik.http.routers.traefik.entrypoint=websecure
-        #
-        #
-        #
-        #
-        #  All these, below, are probably not needed.  
-        #
-        #traefik.http.routers.traefik.middlewares: auth-traefik
-        ## Basic Auth
-        #traefik.http.middlewares.auth-traefik.basicauth.users: "user:$$3x$01$$YfhR1vCY3MbLack.3eu24JuJsKKuretNpbY9euSZsFi0e8olzEeBOB"
-        # Global http to https redirect
-        #traefik.http.routers.http-catchall.rule: "hostregexp(`{host:.+}`)"
-        #traefik.http.routers.http-catchall.entrypoints: web
-        #traefik.http.routers.http-catchall.middlewares: redirect-to-https
-        # Middleware redirect
-        #traefik.http.middlewares.redirect-to-https.redirectscheme.scheme: https
-        #
-        #  whoami:
-        #    deploy:
-        #      labels:
-        #        traefik.http.routers.whoami.middlewares: auth-whoami
-        #        traefik.http.routers.whoami.entrypoints: websecure
-        # traefik.http.routers.whoami.tls: "true"
-        #traefik.http.routers.whoami.tls.certresolver: leresolver
-        # Basic Auth
-        #traefik.http.middlewares.auth-whoami.basicauth.users: "user:$$3x$01$$YfhR1vCY3MbLack.3eu24JuJsKKuretNpbY9euSZsFi0e8olzEeBOB"
 

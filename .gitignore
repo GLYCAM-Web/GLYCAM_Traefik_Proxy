@@ -4,3 +4,4 @@ logs/access.log
 *.swp
 *~
 *git-ignore-me*
+acme/acme.json
