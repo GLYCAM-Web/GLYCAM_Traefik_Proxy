@@ -1,0 +1,76 @@
+services:
+  traefik-reverse-proxy:
+    image: traefik:2.10.6
+    networks:
+      - proxy_net
+    command:
+      - --entrypoints.web.address=:80
+      - --providers.docker=true
+      - --providers.docker.swarmMode=true
+      - --providers.docker.exposedbydefault=false
+      # - --entrypoints.web.http.redirections.entrypoint.to=websecure
+      # - --entrypoints.web.http.redirections.entrypoint.scheme=https
+      # - --entrypoints.web.http.redirections.entrypoint.permanent=true
+      # - --api.insecure=true
+      # - --api=true
+      - --api.dashboard=true
+      - --log.level=DEBUG
+      - --log.filePath=/var/log/traefik.log
+      - --accesslog=true
+      - --accesslog.filePath=/var/log/access.log
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.le.acme.email=woods-lab@uga.edu
+      # - --certificatesresolvers.le.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory
+      - --certificatesresolvers.le.acme.caserver=https://acme-v02.api.letsencrypt.org/directory      
+      - --certificatesresolvers.le.acme.storage=/etc/traefik/acme/acme.json
+      - --certificatesresolvers.le.acme.httpChallenge=true
+      - --certificatesresolvers.le.acme.httpChallenge.entryPoint=web
+      # - --certificatesresolvers.le.acme.dnsChallenge=true
+      # - --certificatesresolvers.le.acme.dnsChallenge.provider=godaddy
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik_proxy_net"
+        # Dashboard
+        - "traefik.http.routers.traefik.rule=Host(`traefik.swarm`)"
+        - "traefik.http.routers.traefik.service=api@internal"
+        # Swarm Mode
+        - "traefik.http.services.traefik.loadbalancer.server.port=80"
+        - "traefik.http.routers.traefik.entrypoints=websecure"
+        - "traefik.http.routers.traefik.tls=true"
+        # https
+        - "traefik.http.routers.traefik.tls.certresolver=le"
+        - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+        - "traefik.http.routers.http-catchall.entrypoints=web"
+        - "traefik.http.routers.http-catchall.middlewares=redirect-to-https"
+        - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+    ports:
+      - "443:443"
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - ./cert/acme.json:/etc/traefik/acme/acme.json
+      - ./logs/traefik.log:/var/log/traefik.log
+      - ./ACCESS_LOGS/access.log:/var/log/access.log
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  whoami:
+    image: traefik/whoami
+    networks:
+      - proxy_net
+    deploy:
+      replicas: 3
+      labels:
+        - "traefik.enable=true"
+        - "traefik.docker.network=traefik_proxy_net"
+        - "traefik.http.routers.whoami.rule=Host(`traefik-whoami.swarm`)"
+        - "traefik.http.services.whoami.loadbalancer.server.port=80"
+        - "traefik.http.routers.whoami.entrypoints=websecure"
+        - "traefik.http.routers.whoami.tls=true"
+networks:
+  proxy_net:
+    name: "traefik_proxy_net"
