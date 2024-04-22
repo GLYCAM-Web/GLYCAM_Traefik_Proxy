@@ -15,7 +15,7 @@ services:
       # - --api=true
       - --api.dashboard=true
       - --log.level=DEBUG
-      - --log.filePath=/var/log/traefik.log
+      - --log.filePath=/log/traefik.log
       - --accesslog=true
       - --accesslog.filePath=/var/log/access.log
       - --entrypoints.websecure.address=:443
@@ -53,8 +53,8 @@ services:
       - "80:80"
       - "8080:8080"
     volumes:
-      - ./cert/acme.json:/etc/traefik/acme/acme.json
-      - ./logs/traefik.log:/var/log/traefik.log
+      - ./acme/acme.json:/etc/traefik/acme/acme.json
+      - ./logs/traefik.log:/log/traefik.log
       - ./ACCESS_LOGS/access.log:/var/log/access.log
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
