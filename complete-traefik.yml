@@ -12,10 +12,9 @@ services:
       # - --entrypoints.web.http.redirections.entrypoint.scheme=https
       # - --entrypoints.web.http.redirections.entrypoint.permanent=true
       # - --api.insecure=true
-      # - --api=true
       - --api.dashboard=true
       - --log.level=DEBUG
-      - --log.filePath=/log/traefik.log
+      # - --log.filePath=/log/traefik.log
       - --accesslog=true
       - --accesslog.filePath=/var/log/access.log
       - --entrypoints.websecure.address=:443
@@ -36,10 +35,16 @@ services:
         - "traefik.enable=true"
         - "traefik.docker.network=traefik_proxy_net"
         # Dashboard
-        - "traefik.http.routers.traefik.rule=Host(`traefik.swarm`)"
-        - "traefik.http.routers.traefik.service=api@internal"
+        - "traefik.http.routers.dashboard.rule=Host(`swarmtest.glycam.org`)"
+       # - "traefik.http.routers.dashboard.rule=Host(`swarmtest.glycam.org`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+        - "traefik.http.routers.dashboard.service=api@internal"
+        - "traefik.http.routers.dashboard.middlewares=auth"
+        - "traefik.http.middlewares.auth.basicauth.users=andrew:$$apr1$$2mj6yZKu$$CdJZqEZMJC4tDukfqwOeQ."
+        # Dummy service for Swarm port detection. The port can be any valid integer value.
+        # - "traefik.http.services.dummy-svc.loadbalancer.server.port=9797"
         # Swarm Mode
-        - "traefik.http.services.traefik.loadbalancer.server.port=80"
+        # - "traefik.http.services.traefik.loadbalancer.server.port=80"
+        - "traefik.http.services.traefik.loadbalancer.server.port=8080"
         - "traefik.http.routers.traefik.entrypoints=websecure"
         - "traefik.http.routers.traefik.tls=true"
         # https
@@ -52,6 +57,7 @@ services:
       - "443:443"
       - "80:80"
       - "8080:8080"
+      - "9797:9797"      
     volumes:
       - ./acme/acme.json:/etc/traefik/acme/acme.json
       - ./logs/traefik.log:/log/traefik.log
